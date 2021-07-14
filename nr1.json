@@ -1,0 +1,6 @@
+{
+  "schemaType": "NERDPACK",
+  "id": "b7e37925-0080-4422-beef-52f809d3fc82",
+  "displayName": "Custom Timeseries",
+  "description": "Plot your own timestamps on a New Relic LineChart"
+}
