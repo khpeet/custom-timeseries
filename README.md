@@ -1,6 +1,6 @@
 # Custom Timeseries
 
-Plots custom timestamp values sent to New Relic (instead of ingest timestamps). Useful to backfill timeseries charts with your own timestamps.
+Plots custom timestamp values sent to New Relic (instead of ingest timestamps). Useful to backfill timeseries charts with your own timestamps. Maintains any dashboard filters that are applied
 
 ## Getting Started Locally
 

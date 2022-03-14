@@ -37,6 +37,10 @@
               {
                 "title": "Seconds",
                 "value": "SECONDS"
+              },
+              {
+                "title": "Percentage",
+                "value": "PERCENTAGE"
               }
             ]
         },
@@ -53,6 +57,22 @@
               {
                 "title": "Seconds",
                 "value": "SECONDS"
+              }
+            ]
+        },
+        {
+            "name": "chartType",
+            "title": "Chart Type",
+            "description": "The type of timeseries chart you want to plot as.",
+            "type": "enum",
+            "items": [
+              {
+                "title": "Line",
+                "value": "line"
+              },
+              {
+                "title": "Area",
+                "value": "area"
               }
             ]
         },
