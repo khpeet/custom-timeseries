@@ -1,7 +1,7 @@
 {
     "private": true,
     "name": "custom-timeseries",
-    "version": "2.1.0",
+    "version": "2.2.3",
     "scripts": {
         "start": "nr1 nerdpack:serve",
         "test": "exit 0"
@@ -13,7 +13,7 @@
         "prop-types": "^15.6.2",
         "react": "^16.6.3",
         "react-dom": "^16.6.3",
-        "recharts": "^2.0.10"
+        "recharts": "^2.12.6"
     },
     "browserslist": [
         "last 2 versions",

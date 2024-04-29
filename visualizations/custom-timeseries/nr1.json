@@ -73,6 +73,10 @@
               {
                 "title": "Area",
                 "value": "area"
+              },
+              {
+                "title": "Stacked Bar",
+                "value": "bar"
               }
             ]
         },
