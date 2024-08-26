@@ -4,93 +4,96 @@
     "displayName": "Custom Timeseries",
     "description": "",
     "configuration": [
-        {
-            "name": "accountId",
-            "title": "Account ID",
-            "description": "Account ID to be associated with the query",
-            "type": "account-id"
-        },
-        {
-            "name": "query",
-            "title": "Query",
-            "description": "NRQL query for visualization. Recommended to SELECT your Y value (value to plot), and facet by your custom timestamp attribute (X value).",
-            "type": "nrql"
-        },
-        {
-            "name": "selectUnit",
-            "title": "Value Unit",
-            "description": "Unit of measurement for attribute being plotted.",
-            "type": "enum",
-            "items": [
-              {
-                "title": "Bytes",
-                "value": "BYTES"
-              },
-              {
-                "title": "Count",
-                "value": "COUNT"
-              },
-              {
-                "title": "Milliseconds",
-                "value": "MILLISECONDS"
-              },
-              {
-                "title": "Seconds",
-                "value": "SECONDS"
-              },
-              {
-                "title": "Percentage",
-                "value": "PERCENTAGE"
-              }
-            ]
-        },
-        {
-            "name": "timestampUnit",
-            "title": "Timestamp Unit",
-            "description": "Unit of measurement for timestamp - Seconds or Milliseconds since Epoch.",
-            "type": "enum",
-            "items": [
-              {
-                "title": "Milliseconds",
-                "value": "MILLISECONDS"
-              },
-              {
-                "title": "Seconds",
-                "value": "SECONDS"
-              }
-            ]
-        },
-        {
-            "name": "chartType",
-            "title": "Chart Type",
-            "description": "The type of timeseries chart you want to plot as.",
-            "type": "enum",
-            "items": [
-              {
-                "title": "Line",
-                "value": "line"
-              },
-              {
-                "title": "Area",
-                "value": "area"
-              },
-              {
-                "title": "Stacked Bar",
-                "value": "bar"
-              }
-            ]
-        },
-        {
-            "name": "legend",
-            "title": "Legend Title",
-            "description": "Timeseries plot title.",
-            "type": "string"
-        },
-        {
-            "name": "lineColor",
-            "title": "Line Color",
-            "description": "Color of timeseries line. Accepts regular colors and hex colors.",
-            "type": "string"
-        }
+      {
+          "name": "chartType",
+          "title": "Chart Type",
+          "description": "The type of timeseries chart you want to plot queries within.",
+          "type": "enum",
+          "items": [
+            {
+              "title": "Line",
+              "value": "line"
+            },
+            {
+              "title": "Area",
+              "value": "area"
+            }
+          ]
+      },
+      {
+        "name": "queries",
+        "title": "Timeseries Queries",
+        "type": "collection",
+        "items": [
+          {
+              "name": "accountId",
+              "title": "Account ID",
+              "description": "Account ID to be associated with the query",
+              "type": "account-id"
+          },
+          {
+              "name": "query",
+              "title": "Query",
+              "description": "NRQL query for visualization. Recommended to SELECT your Y value (value to plot), and facet by your custom timestamp attribute (X value).",
+              "type": "nrql"
+          },
+          {
+              "name": "selectUnit",
+              "title": "Value Unit",
+              "description": "Unit of measurement for attribute being plotted.",
+              "type": "enum",
+              "items": [
+                {
+                  "title": "Bytes",
+                  "value": "BYTES"
+                },
+                {
+                  "title": "Count",
+                  "value": "COUNT"
+                },
+                {
+                  "title": "Milliseconds",
+                  "value": "MILLISECONDS"
+                },
+                {
+                  "title": "Seconds",
+                  "value": "SECONDS"
+                },
+                {
+                  "title": "Percentage",
+                  "value": "PERCENTAGE"
+                }
+              ]
+          },
+          {
+              "name": "timestampUnit",
+              "title": "Timestamp Unit",
+              "description": "Unit of measurement for timestamp - Seconds or Milliseconds since Epoch.",
+              "type": "enum",
+              "items": [
+                {
+                  "title": "Milliseconds",
+                  "value": "MILLISECONDS"
+                },
+                {
+                  "title": "Seconds",
+                  "value": "SECONDS"
+                }
+              ]
+          },
+          {
+              "name": "legend",
+              "title": "Legend Title",
+              "description": "Timeseries plot title.",
+              "type": "string"
+          },
+          {
+              "name": "lineColor",
+              "title": "Line Color",
+              "description": "Color of timeseries line. Accepts regular colors and hex colors.",
+              "type": "string"
+          }
+        ]
+      }
     ]
 }

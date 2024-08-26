@@ -1,9 +1,5 @@
-import React from "react";
-import PropTypes from "prop-types";
+import React, {useState, useEffect, useContext} from "react";
 import {
-  Card,
-  CardBody,
-  HeadingText,
   NrqlQuery,
   Spinner,
   LineChart,
@@ -13,236 +9,134 @@ import {
 } from "nr1";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 
-export default class CustomTimeseriesVisualization extends React.Component {
-  // Custom props you wish to be configurable in the UI must also be defined in
-  // the nr1.json file for the visualization. See docs for more details.
-  static propTypes = {
-    //title: PropTypes.string,
-    query: PropTypes.string,
-    accountId: PropTypes.number,
-    legend: PropTypes.string,
-    lineColor: PropTypes.string,
-    selectUnit: PropTypes.string,
-    timestampUnit: PropTypes.object,
-    chartType: PropTypes.string,
-  };
+const TimeseriesViz = (props) => {
+  let { chartType, queries } = props;
+  const platformContext = useContext(PlatformStateContext);
+  const nerdletContext = useContext(NerdletStateContext);
+  const [nrqlResults, setNrqlResults] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  formatTimeseries(d, filters) {
-    let chartTitle = this.props.legend;
-    let chartType = this.props.chartType;
-    if (filters) {
-      chartTitle += ` WHERE ${filters}`;
-    }
-    let timeData = [
-      {
+  if (chartType == null) {
+    chartType = 'line';
+  }
+
+  //render as long as at least 1 query + options configured
+  let nrqlQueriesAvailable = queries && queries[0] && queries[0].accountId && queries[0].query && queries[0].selectUnit && queries[0].timestampUnit && queries[0].legend;
+
+  const formatTimeData = (data, qs) => {
+    let timeData = [];
+
+    for (let i=0; i<data.length; i++) {
+      let chartTitle = qs[i].legend;
+
+      if (nerdletContext) {
+        if (nerdletContext.filters) {
+          chartTitle += ` WHERE ${nerdletContext.filters}`;
+        }
+      }
+
+      let aSeries = {
         metadata: {
-          id: "series-1",
+          id: `series-${i+1}`,
           name: chartTitle,
-          color: this.props.lineColor,
+          color: qs[i].lineColor ? qs[i].lineColor : 'green',
           viz: "main",
           units_data: {
             x: "TIMESTAMP",
-            y: this.props.selectUnit,
+            y: qs[i].selectUnit
           },
         },
         data: [],
-      },
-    ];
-    for (let r of d) {
-      let x = null;
-      if (this.props.timestampUnit == "SECONDS") {
-        x = Number(r.metadata.name) * 1000;
+      };
+
+      for (let r of data[i].data) {
+        let x = null;
+        if (qs[i].timestampUnit == "SECONDS") {
+          x = Number(r.metadata.name) * 1000;
+        }
+
+        if (qs[i].timestampUnit == "MILLISECONDS") {
+          x = Number(r.metadata.name);
+        }
+        let y = r.data[0].y;
+        // console.log({ x, y });
+        if (!isNaN(x)) {
+          aSeries.data.push({ x: x, y: y });
+        }
       }
 
-      if (this.props.timestampUnit == "MILLISECONDS") {
-        x = Number(r.metadata.name);
-      }
-      let y = r.data[0].y;
-      // console.log({ x, y });
-      if (!isNaN(x)) {
-        timeData[0].data.push({ x: x, y: y });
-      }
+      let sorted = aSeries.data.sort(function (x, y) {
+        return y.x - x.x;
+      });
+
+      aSeries.data = sorted;
+      timeData.push(aSeries);
     }
-
-    let sorted = timeData[0].data.sort(function (x, y) {
-      return y.x - x.x;
-    });
-
-    timeData[0].data = sorted;
 
     return timeData;
+
   }
 
-  formatBarChart(d, filters) {
-    let chartTitle = this.props.legend;
-    let chartType = this.props.chartType;
+  const fetchData = async () => {
+    let allData = [];
+    for (let c=0; c<queries.length; c++) {
+      let filteredQuery = queries[c].query;
 
-    if (filters) {
-      chartTitle += ` WHERE ${filters}`;
+      let since = '';
+
+      if (platformContext && platformContext.timeRange) {
+        if (platformContext.timeRange.duration) {
+          since = ` since ${platformContext.timeRange.duration / 60 / 1000} MINUTES AGO`;
+        } else if (platformContext.timeRange.begin_time && platformContext.timeRange.end_time) {
+          since = ` since ${platformContext.timeRange.begin_time} until ${platformContext.timeRange.end_time}`;
+        }
+      }
+
+      if (since !== '') {
+        filteredQuery += since;
+      }
+
+      if (nerdletContext) {
+        if (nerdletContext.filters) {
+          filteredQuery += ` WHERE ${nerdletContext.filters} `;
+        }
+      }
+      let resp = await NrqlQuery.query({ accountIds: [queries[c].accountId], query: filteredQuery });
+      allData.push(resp);
     }
 
-    let transformed = [];
-
-    for (let r of d) {
-      let x = null;
-      if (this.props.timestampUnit == "SECONDS") {
-        x = Number(r.metadata.name) * 1000;
-      }
-
-      if (this.props.timestampUnit == "MILLISECONDS") {
-        x = Number(r.metadata.name);
-      }
-      let y = r.data[0].y;
-      // console.log({ x, y });
-      if (!isNaN(x)) {
-        transformed.push({ x: x, [chartTitle]: y });
-      }
-    }
-
-    let sorted = transformed.sort(function (x, y) {
-      return x.x - y.x;
-    });
-
-    transformed = sorted;
-
-    return transformed;
+    return allData;
   }
 
-  render() {
-    const {
-      query,
-      accountId,
-      legend,
-      lineColor,
-      selectUnit,
-      timestampUnit,
-      chartType,
-    } = this.props;
+  if (nrqlQueriesAvailable) {
 
-    const nrqlQueryPropsAvailable =
-      query && legend && lineColor && selectUnit && timestampUnit;
-    accountId;
+    useEffect(async () => {
+      let data = await fetchData();
+      setNrqlResults(data);
+      setLoading(false);
+    }, [platformContext, nerdletContext, queries]);
 
-    if (!nrqlQueryPropsAvailable) {
-      return <EmptyState />;
+    if (nrqlResults && !loading) {
+      if (chartType == 'line') {
+        const formattedData = formatTimeData(nrqlResults, queries);
+        return <LineChart data={formattedData} fullHeight fullWidth />
+      }
+      if (chartType == 'area') {
+        const formattedData = formatTimeData(nrqlResults, queries);
+        return <AreaChart data={formattedData} fullHeight fullWidth />
+      }
     }
 
-    return (
-      <>
-        <PlatformStateContext.Consumer>
-        {platformUrlState => {
-          let since = '';
+    if (loading) {
+      return <Spinner />
+    }
 
-          if (platformUrlState && platformUrlState.timeRange) {
-            if (platformUrlState.timeRange.duration) {
-              since = ` since ${platformUrlState.timeRange.duration / 60 / 1000} MINUTES AGO`;
-            } else if (platformUrlState.timeRange.begin_time && platformUrlState.timeRange.end_time) {
-              since = ` since ${platformUrlState.timeRange.begin_time} until ${platformUrlState.timeRange.end_time}`;
-            }
-          }
-          return (
-            <NerdletStateContext.Consumer>
-              {(nerdletState) => {
-                const { filters } = nerdletState;
+    return <Spinner />
 
-                let filteredQuery = query;
-                if (filters) {
-                  filteredQuery += ` WHERE ${filters} `;
-                }
 
-                if (since !== '') {
-                  filteredQuery += since;
-                }
-                // console.log(filteredQuery)
-                return (
-                  <NrqlQuery
-                    accountId={accountId}
-                    query={filteredQuery}
-                    pollInterval={NrqlQuery.AUTO_POLL_INTERVAL}
-                  >
-                    {({ data, loading, error }) => {
-                      if (loading) {
-                        return <Spinner />;
-                      }
-
-                      if (error) {
-                        throw new Error(error.message);
-                      }
-                      // console.log({ nerdletState });
-                      if (data) {
-                        if (chartType === "line" || !chartType) {
-                          const formattedData = this.formatTimeseries(data, filters);
-                          return <LineChart data={formattedData} fullHeight fullWidth />
-                        }
-
-                        if (chartType === "area") {
-                          const formattedData = this.formatTimeseries(data, filters);
-                          return <AreaChart data={formattedData} fullHeight fullWidth />
-                        }
-
-                        if (chartType === "bar") {
-                          const formattedData = this.formatBarChart(data, filters);
-                          return (
-                            <BarChart
-                              width={600}
-                              height={400}
-                              data={formattedData}
-                            >
-                              <XAxis dataKey="x" tickFormatter={(date) => {
-                                const d = new Date(date);
-                                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                                const dd = String(d.getDate()).padStart(2, '0');
-                                const hour = String(d.getHours()).padStart(2, '0');
-                                const min = String(d.getMinutes()).padStart(2, '0');
-                                return `${mm}-${dd} ${hour}:${min}`;
-                              }} />
-                              <YAxis />
-                              <Tooltip labelFormatter={(value) => {
-                                const date = new Date(value);
-                                return date.toLocaleString();
-                              }} />
-                              <Legend />
-                              <Bar dataKey={this.props.legend} fill={this.props.lineColor} />
-                            </BarChart>
-                          )
-                        }
-                      }
-                    }}
-                  </NrqlQuery>
-                );
-              }}
-            </NerdletStateContext.Consumer>
-          )
-        }}
-        </PlatformStateContext.Consumer>
-      </>
-    );
+  } else {
+    return <h1>Check configuration fields</h1>
   }
 }
 
-const EmptyState = () => (
-  <Card className="EmptyState">
-    <CardBody className="EmptyState-cardBody">
-      <HeadingText
-        spacingType={[HeadingText.SPACING_TYPE.LARGE]}
-        type={HeadingText.TYPE.HEADING_3}
-      >
-        Please validate all configuration fields have been filled.
-      </HeadingText>
-    </CardBody>
-  </Card>
-);
-
-const ErrorState = () => (
-  <Card className="ErrorState">
-    <CardBody className="ErrorState-cardBody">
-      <HeadingText
-        className="ErrorState-headingText"
-        spacingType={[HeadingText.SPACING_TYPE.LARGE]}
-        type={HeadingText.TYPE.HEADING_3}
-      >
-        Oops! Something went wrong.
-      </HeadingText>
-    </CardBody>
-  </Card>
-);
+export default TimeseriesViz;
